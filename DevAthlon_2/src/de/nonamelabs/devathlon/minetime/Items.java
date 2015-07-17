@@ -48,7 +48,7 @@ public class Items {
 	}
 	
 	public static ItemStack getYesterdayItem() {
-		ItemStack item = new ItemStack(Material.EMERALD);
+		ItemStack item = new ItemStack(Material.DIAMOND);
 		List<String> lore = new ArrayList<String>();
 		lore.add(ChatColor.LIGHT_PURPLE + "Zurück in die Zukunft I");
 		ItemMeta meta = item.getItemMeta();
