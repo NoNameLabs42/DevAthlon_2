@@ -69,7 +69,7 @@ public class Items {
 		return item;
 	}
 	
-	public static ItemStack MarkRooms() {
+	public static ItemStack getSelectorItem() {
 		ItemStack item = new ItemStack(Material.WOOD_HOE);
 		List<String> lore = new ArrayList<String>();
 		lore.add(ChatColor.LIGHT_PURPLE + "Bestimte Ecke des Raumes schlagen um Raum hinzu zu fügen");
