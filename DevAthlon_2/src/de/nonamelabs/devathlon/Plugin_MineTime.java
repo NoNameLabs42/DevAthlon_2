@@ -120,8 +120,8 @@ public class Plugin_MineTime extends JavaPlugin implements Listener {
 			if (game!=null) {
 				sender.sendMessage(ChatColor.RED + "Das Spiel ist bereits gestartet!");
 			} else {
-				game = new Game(rooms, time, room_list);
 				sender.sendMessage(ChatColor.GREEN + "Du hast das Spiel gestartet!");
+				game = new Game(rooms, time, room_list);
 			}
 			return true;
 		} else if (commandlabel.equalsIgnoreCase("stopgame")) {

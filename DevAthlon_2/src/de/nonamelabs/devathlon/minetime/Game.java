@@ -29,6 +29,9 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
 
 import de.nonamelabs.devathlon.Plugin_MineTime;
 import de.nonamelabs.devathlon.util.Coordinate;
@@ -39,10 +42,13 @@ public class Game implements Listener {
 	public static final ChatColor PLUGIN_NAME_COLOR = ChatColor.LIGHT_PURPLE;
 	
 	public int rooms;
-	public int time;
+	public int total_time;
 	public List<Coordinate> room_list;
 	public Random r = new Random();
 	public boolean stop = false;
+	public World w;
+	public Scoreboard sc;
+	public String remaining_time;
 	
 	public Player p1;
 	public Player p2;
@@ -53,11 +59,10 @@ public class Game implements Listener {
 	public Room p1_room;
 	public Room p2_room;
 	
-	public World w;
 	
 	public Game(int rooms, int time, List<Coordinate> room_list) {
 		this.rooms = rooms;
-		this.time = time;
+		this.total_time = time;
 		this.room_list = new ArrayList<Coordinate>();
 		
 		for (int i = 0; i < rooms; i++) {
@@ -85,6 +90,8 @@ public class Game implements Listener {
 	public void start() {
 		initMap();
 		
+		sc = Bukkit.getScoreboardManager().getNewScoreboard();
+		
 		setupPlayer(p1, room_list.get(0), false);		
 		setupPlayer(p2, room_list.get(0), true);
 		
@@ -98,10 +105,25 @@ public class Game implements Listener {
 			
 			@Override
 			public void run() {
-				for (int i = 1; i <= time && !stop; i++) {
+				for (int t= 1; t <= total_time && !stop; t++) {
+					
+					int time = total_time - t;
+					String seconds = String.valueOf(time % 60);
+					
+					for (int i = 0; i < 2 - seconds.length(); i++) {
+						seconds = "0" + seconds;
+					}
+					
+					remaining_time = (time / 60) + ":" + seconds;
 					
 					p1_room.gameTick();
 					p2_room.gameTick();
+					
+					if (time % 30 == 0) {
+						sendGameMessage(remaining_time + " verbleibend!");
+					}
+					
+					updateScoreboard();
 					
 					try {
 						Thread.sleep(1000);
@@ -117,6 +139,29 @@ public class Game implements Listener {
 				stop();
 			}
 		});
+	}
+	
+	public void updateScoreboard() {
+		Objective obj;
+		
+		if (sc.getObjective("MineTime") == null) {
+			obj = sc.registerNewObjective("MineTime", "dummy");
+		} else {
+			obj = sc.getObjective("MineTime");
+			obj.unregister();
+			obj = sc.registerNewObjective("MineTime", "dummy");
+		}
+		
+		obj.setDisplayName(PLUGIN_NAME_COLOR + "MineTime");
+		obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+		
+		int curr = 0;
+		obj.getScore(p1.getDisplayName() + ": " + (p1_room_number+1)).setScore(curr++);
+		obj.getScore(p2.getDisplayName() + ": " + (p2_room_number+1)).setScore(curr++);
+		obj.getScore(ChatColor.RESET + "").setScore(curr++);
+		obj.getScore("Levels: " + rooms).setScore(curr++);;
+		obj.getScore(ChatColor.RESET + "" + ChatColor.RESET).setScore(curr++);
+		obj.getScore("Zeit: " + remaining_time).setScore(curr++);
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -140,15 +185,17 @@ public class Game implements Listener {
 		sendGameMessage("Du bist Spieler!", p);
 		p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + (second ? 24 : 0), spawn.getZ()+1));
 		if (second) {
-			p2_room = new Room(w, spawn);
+			p2_room = new Room(w, spawn, true);
 		} else {
-			p1_room = new Room(w, spawn);
+			p1_room = new Room(w, spawn, false);
 		}
 		p.setHealth(20);
 		p.setFoodLevel(20);
 		
 		p.getInventory().clear();
 		p.getInventory().setItem(8, Items.getWarpItem());
+		
+		p.setScoreboard(sc);
 	}
 	
 	public void setupSpectator(Player p) {
@@ -159,6 +206,8 @@ public class Game implements Listener {
 		p.setFoodLevel(20);
 
 		p.getInventory().clear();
+		
+		p.setScoreboard(sc);
 	}
 	
 	public void sendGameMessage(String message) {
@@ -178,9 +227,14 @@ public class Game implements Listener {
 			public void run() {
 				p1_room.unload();
 				p2_room.unload();
+				
+				sc.clearSlot(DisplaySlot.SIDEBAR);
+				sc = null;
+				
 				for (Player p: Bukkit.getOnlinePlayers()) {
 					p.teleport(w.getSpawnLocation());
 					p.setGameMode(GameMode.ADVENTURE);
+					p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 				}
 			}
 		});
@@ -193,9 +247,12 @@ public class Game implements Listener {
 		Plugin_MineTime.Plugin.game = null;
 		p1_room.unload();
 		p2_room.unload();
+		sc.clearSlot(DisplaySlot.SIDEBAR);
+		sc = null;
 		for (Player p: Bukkit.getOnlinePlayers()) {
 			p.teleport(w.getSpawnLocation());
 			p.setGameMode(GameMode.ADVENTURE);
+			p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 		}
 				
 		HandlerList.unregisterAll(this);
@@ -360,9 +417,9 @@ public class Game implements Listener {
 						Coordinate spawn = room_list.get(p1_room_number);
 						p1_time = Time.PRESENT;
 						p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8, spawn.getZ()+1));
-						p1_room = new Room(w, spawn);
+						p1_room = new Room(w, spawn, false);
 						
-						sendGameMessage("Du hast Test " + (p1_room_number + 1) + " erfolgreich absolviert!", p);
+						sendGameMessage("Du hast Test " + (p1_room_number) + " erfolgreich absolviert!", p);
 						p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
 					}
 				} else {
@@ -377,9 +434,9 @@ public class Game implements Listener {
 						Coordinate spawn = room_list.get(p2_room_number);
 						p2_time = Time.PRESENT;
 						p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + 24, spawn.getZ()+1));
-						p2_room = new Room(w, spawn);
+						p2_room = new Room(w, spawn, true);
 						
-						sendGameMessage("Du hast Test " + (p2_room_number + 1) + " erfolgreich absolviert!", p);
+						sendGameMessage("Du hast Test " + (p2_room_number) + " erfolgreich absolviert!", p);
 						p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
 					}
 				}
