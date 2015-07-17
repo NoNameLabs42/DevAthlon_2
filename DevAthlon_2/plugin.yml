@@ -1,3 +1,16 @@
 name: DevAthlon_2
 version: 1.0.0
 main: de.nonamelabs.devathlon.Plugin_MineTime
+commands:
+  startgame:
+    description: Startet das Spiel
+    usage: /startgame <rooms> <time>
+  addRoom:
+    description: Fuegt einen weiteren Raum hinzu
+    usage: /addRoom
+  resetRooms:
+    description: Setzt alle Raeume zurueck
+    usage: /resetRooms
+  stopGame:
+    description: Stoppt das Spiel
+    usage: /stopGame
