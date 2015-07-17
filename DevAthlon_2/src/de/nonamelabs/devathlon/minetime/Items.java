@@ -10,13 +10,17 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-public class Items {
-	
-	public static Inventory time_menue = Bukkit.createInventory(null, 9, ChatColor.RED + "Lets do the time warp agaaain");
-	static {
-		time_menue.setItem(1, new ItemStack(getYesterdayItem()));
-		time_menue.setItem(4, new ItemStack(getNowItem()));
-		time_menue.setItem(7, new ItemStack(getFutureItem()));
+import de.nonamelabs.devathlon.util.Item_Util;
+
+public class Items {	
+	public static Inventory getWarpInventory(Time time) {
+		Inventory time_menue = Bukkit.createInventory(null, 9, ChatColor.RED + "Lets do the time warp agaaain");
+		
+		time_menue.setItem(1, time != Time.PAST ? getYesterdayItem() : Item_Util.addChosenEffect(getYesterdayItem()));
+		time_menue.setItem(4, time != Time.PRESENT ? getNowItem() : Item_Util.addChosenEffect(getNowItem()));
+		time_menue.setItem(7, time != Time.FUTURE ? getFutureItem() : Item_Util.addChosenEffect(getFutureItem()));
+		
+		return time_menue;
 	}
 	
 	public static ItemStack getWarpItem() {
