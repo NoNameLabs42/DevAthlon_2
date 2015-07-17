@@ -8,6 +8,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -22,8 +24,10 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import de.nonamelabs.devathlon.Plugin_MineTime;
@@ -42,6 +46,8 @@ public class Game implements Listener {
 	public Player p2;
 	public Time p1_time = Time.PRESENT;
 	public Time p2_time = Time.PRESENT;
+	public int p1_room = 0;
+	public int p2_room = 0;
 	public World w;
 	
 	public Game(int rooms, int time, List<Coordinate> room_list) {
@@ -104,6 +110,8 @@ public class Game implements Listener {
 		p.setGameMode(GameMode.ADVENTURE);
 		sendGameMessage("Du bist Spieler!", p);
 		p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + (second ? 24 : 0), spawn.getZ()+1));
+		p.setHealth(20);
+		p.setFoodLevel(20);
 		
 		p.getInventory().clear();
 		p.getInventory().setItem(8, Items.getWarpItem());
@@ -113,6 +121,8 @@ public class Game implements Listener {
 		p.setGameMode(GameMode.SPECTATOR);
 		p.teleport(r.nextBoolean() ? p1 : p2);
 		sendGameMessage("Du bist Spectator!", p);
+		p.setHealth(20);
+		p.setFoodLevel(20);
 
 		p.getInventory().clear();
 	}
@@ -165,7 +175,11 @@ public class Game implements Listener {
 		ItemStack ic = event.getItem();		
 		if (ic != null) {
 			if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && ic.equals(Items.getWarpItem())) {
-				event.getPlayer().openInventory(Items.getWarpInventory(event.getPlayer().equals(p1) ? p1_time : p2_time));
+				if (w.getBlockAt(event.getPlayer().getLocation().add(0, -1, 0)).getType() == Material.GOLD_BLOCK || w.getBlockAt(event.getPlayer().getLocation().add(0, -2, 0)).getType() == Material.GOLD_BLOCK) {
+					event.getPlayer().openInventory(Items.getWarpInventory(event.getPlayer().equals(p1) ? p1_time : p2_time));
+				} else {
+					sendGameMessage("Du hast nicht genug Energie, du musst auf einem Goldblock stehen um die Zeitmaschine zu benutzen!", event.getPlayer());
+				}
 			}
 		}
 	}
@@ -211,5 +225,85 @@ public class Game implements Listener {
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent event) {
 		event.setCancelled(true);
+		
+		Inventory iv = event.getInventory();
+		Player p = (Player) event.getWhoClicked();
+		ItemStack ic = event.getCurrentItem();
+		
+		if (iv == null || p == null || ic == null) {
+			return;
+		}
+		
+		if (iv.getName().equals(Items.getWarpInventory(Time.PRESENT).getName())) {
+			int teleport = 0;
+			switch (p.equals(p1) ? p1_time : p2_time) {
+			case PRESENT:
+				teleport = -8;
+				break;
+			case FUTURE:
+				teleport = -16;
+				break;
+			case PAST:
+				teleport = 0;
+				break;
+			}
+			
+			if (ic.equals(Items.getYesterdayItem())) {
+				p.closeInventory();
+				teleport += 0;
+				if (p.equals(p1)) {
+					p1_time = Time.PAST;
+				} else {
+					p2_time = Time.PAST;
+				}
+				p.teleport(p.getLocation().add(0, teleport, 0));
+			} else if (ic.equals(Items.getNowItem())) {
+				p.closeInventory();
+				teleport += 8;
+				if (p.equals(p1)) {
+					p1_time = Time.PRESENT;
+				} else {
+					p2_time = Time.PRESENT;
+				}
+				p.teleport(p.getLocation().add(0, teleport, 0));
+			} else if (ic.equals(Items.getFutureItem())) {
+				p.closeInventory();
+				teleport += 16;
+				if (p.equals(p1)) {
+					p1_time = Time.FUTURE;
+				} else {
+					p2_time = Time.FUTURE;
+				}
+				p.teleport(p.getLocation().add(0, teleport, 0));
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent event) {
+		Player p = event.getPlayer();
+		if (p == null) {
+			return;
+		}
+		
+		if (p.equals(p1) || p.equals(p2)) {
+			if (w.getBlockAt(event.getPlayer().getLocation().add(0, -1, 0)).getType() == Material.EMERALD_BLOCK || w.getBlockAt(event.getPlayer().getLocation().add(0, -2, 0)).getType() == Material.EMERALD_BLOCK) {
+				if (p.equals(p1)) {
+					p1_room++;
+					Coordinate spawn = room_list.get(p1_room);
+					p1_time = Time.PRESENT;
+					p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8, spawn.getZ()+1));
+					sendGameMessage("Du hast Test " + (p1_room + 1) + " erfolgreich absolviert!", p);
+					p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+				} else {
+					p2_room++;
+					Coordinate spawn = room_list.get(p2_room);
+					p2_time = Time.PRESENT;
+					p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + 24, spawn.getZ()+1));
+					sendGameMessage("Du hast Test " + (p2_room + 1) + " erfolgreich absolviert!", p);
+					p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+				}
+			}
+		}
 	}
 }
