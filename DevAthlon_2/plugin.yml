@@ -5,12 +5,12 @@ commands:
   startgame:
     description: Startet das Spiel
     usage: /startgame <rooms> <time>
-  addRoom:
-    description: Fuegt einen weiteren Raum hinzu
-    usage: /addRoom
   resetRooms:
     description: Setzt alle Raeume zurueck
     usage: /resetRooms
   stopGame:
     description: Stoppt das Spiel
     usage: /stopGame
+  selector:
+    description: Gibt dem Spieler das Auswahl Item
+    usage: /selector
