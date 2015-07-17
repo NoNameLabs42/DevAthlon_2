@@ -42,12 +42,17 @@ public class Game implements Listener {
 	public int time;
 	public List<Coordinate> room_list;
 	public Random r = new Random();
+	public boolean stop = false;
+	
 	public Player p1;
 	public Player p2;
 	public Time p1_time = Time.PRESENT;
 	public Time p2_time = Time.PRESENT;
-	public int p1_room = 0;
-	public int p2_room = 0;
+	public int p1_room_number = 0;
+	public int p2_room_number = 0;
+	public Room p1_room;
+	public Room p2_room;
+	
 	public World w;
 	
 	public Game(int rooms, int time, List<Coordinate> room_list) {
@@ -88,6 +93,30 @@ public class Game implements Listener {
 				setupSpectator(p);
 			}
 		}
+		
+		Bukkit.getScheduler().runTaskAsynchronously(Plugin_MineTime.Plugin, new Runnable() {
+			
+			@Override
+			public void run() {
+				for (int i = 1; i <= time && !stop; i++) {
+					
+					p1_room.gameTick();
+					p2_room.gameTick();
+					
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				if (stop) return;
+				
+				sendGameMessage("Die Zeit ist um!");
+				sendGameMessage("Spieler " + (p1_room_number > p2_room_number ? p1.getDisplayName() : p2.getDisplayName()) + " hat das Spiel gewonnen!");
+				stop();
+			}
+		});
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -110,6 +139,11 @@ public class Game implements Listener {
 		p.setGameMode(GameMode.ADVENTURE);
 		sendGameMessage("Du bist Spieler!", p);
 		p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + (second ? 24 : 0), spawn.getZ()+1));
+		if (second) {
+			p2_room = new Room(w, spawn);
+		} else {
+			p1_room = new Room(w, spawn);
+		}
 		p.setHealth(20);
 		p.setFoodLevel(20);
 		
@@ -136,17 +170,33 @@ public class Game implements Listener {
 	}
 	
 	public void stop() {
+		stop = true;
 		Plugin_MineTime.Plugin.game = null;
 		Bukkit.getScheduler().runTask(Plugin_MineTime.Plugin, new Runnable() {
 			
 			@Override
 			public void run() {
+				p1_room.unload();
+				p2_room.unload();
 				for (Player p: Bukkit.getOnlinePlayers()) {
 					p.teleport(w.getSpawnLocation());
 					p.setGameMode(GameMode.ADVENTURE);
 				}
 			}
 		});
+				
+		HandlerList.unregisterAll(this);
+	}
+	
+	public void s_stop() {
+		stop = true;
+		Plugin_MineTime.Plugin.game = null;
+		p1_room.unload();
+		p2_room.unload();
+		for (Player p: Bukkit.getOnlinePlayers()) {
+			p.teleport(w.getSpawnLocation());
+			p.setGameMode(GameMode.ADVENTURE);
+		}
 				
 		HandlerList.unregisterAll(this);
 	}
@@ -171,7 +221,10 @@ public class Game implements Listener {
 	
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent event) {
-		event.setCancelled(true);
+		if (event.getAction() != Action.PHYSICAL) {
+			event.setCancelled(true);
+		}
+		
 		ItemStack ic = event.getItem();		
 		if (ic != null) {
 			if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && ic.equals(Items.getWarpItem())) {
@@ -287,21 +340,48 @@ public class Game implements Listener {
 		}
 		
 		if (p.equals(p1) || p.equals(p2)) {
+			
+			if (p.equals(p1)) {
+				p1_room.player_move(p);
+			} else {
+				p2_room.player_move(p);
+			}
+			
 			if (w.getBlockAt(event.getPlayer().getLocation().add(0, -1, 0)).getType() == Material.EMERALD_BLOCK || w.getBlockAt(event.getPlayer().getLocation().add(0, -2, 0)).getType() == Material.EMERALD_BLOCK) {
 				if (p.equals(p1)) {
-					p1_room++;
-					Coordinate spawn = room_list.get(p1_room);
-					p1_time = Time.PRESENT;
-					p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8, spawn.getZ()+1));
-					sendGameMessage("Du hast Test " + (p1_room + 1) + " erfolgreich absolviert!", p);
-					p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+					p1_room_number++;
+					if (p1_room_number == rooms) {
+						sendGameMessage("Du hast das Spiel gewonnen", p);
+						sendGameMessage(p.getDisplayName() + " hat das Spiel gewonnen!");
+						stop();
+					} else {
+						p1_room.unload();
+						
+						Coordinate spawn = room_list.get(p1_room_number);
+						p1_time = Time.PRESENT;
+						p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8, spawn.getZ()+1));
+						p1_room = new Room(w, spawn);
+						
+						sendGameMessage("Du hast Test " + (p1_room_number + 1) + " erfolgreich absolviert!", p);
+						p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+					}
 				} else {
-					p2_room++;
-					Coordinate spawn = room_list.get(p2_room);
-					p2_time = Time.PRESENT;
-					p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + 24, spawn.getZ()+1));
-					sendGameMessage("Du hast Test " + (p2_room + 1) + " erfolgreich absolviert!", p);
-					p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+					p2_room_number++;
+					if (p2_room_number == rooms) {
+						sendGameMessage("Du hast das Spiel gewonnen", p);
+						sendGameMessage(p.getDisplayName() + " hat das Spiel gewonnen!");
+						stop();
+					} else {
+						p2_room.unload();
+						
+						Coordinate spawn = room_list.get(p2_room_number);
+						p2_time = Time.PRESENT;
+						p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + 24, spawn.getZ()+1));
+						p2_room = new Room(w, spawn);
+						
+						sendGameMessage("Du hast Test " + (p2_room_number + 1) + " erfolgreich absolviert!", p);
+						p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+					}
 				}
 			}
 		}

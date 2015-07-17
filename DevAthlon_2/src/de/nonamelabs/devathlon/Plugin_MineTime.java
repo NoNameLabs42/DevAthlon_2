@@ -40,6 +40,11 @@ public class Plugin_MineTime extends JavaPlugin implements Listener {
 	}
 	
 	public void onDisable() {
+		
+		if (game != null) {
+			game.s_stop();
+		}
+		
 		save_Config();
 		logger.info("Plugin wurde gestoppt!");
 	}
@@ -124,8 +129,7 @@ public class Plugin_MineTime extends JavaPlugin implements Listener {
 			if (game==null) {
 				sender.sendMessage(ChatColor.RED + "Das Spiel war nicht gestartet!");
 			} else {
-				game.stop();
-				game = null;
+				game.s_stop();
 				sender.sendMessage(ChatColor.GREEN + "Du hast das Spiel gestoppt!");
 			}
 			return true;
