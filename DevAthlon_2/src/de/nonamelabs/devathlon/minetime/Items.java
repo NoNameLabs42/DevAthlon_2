@@ -3,12 +3,22 @@ package de.nonamelabs.devathlon.minetime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class Items {
+	
+	public static Inventory time_menue = Bukkit.createInventory(null, 9, ChatColor.RED + "Lets do the time warp agaaain");
+	static {
+		time_menue.setItem(1, new ItemStack(getYesterdayItem()));
+		time_menue.setItem(4, new ItemStack(getNowItem()));
+		time_menue.setItem(7, new ItemStack(getFutureItem()));
+	}
+	
 	public static ItemStack getWarpItem() {
 		ItemStack item = new ItemStack(Material.WATCH);
 		List<String> lore = new ArrayList<String>();
