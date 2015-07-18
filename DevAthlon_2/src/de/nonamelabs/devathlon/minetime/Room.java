@@ -101,6 +101,7 @@ public class Room {
 					w.playEffect(b.getLocation().add(0, 2, 0), Effect.FLYING_GLYPH, 100);
 					w.playEffect(b.getLocation().add(0, 2, 0), Effect.FLYING_GLYPH, 100);
 				}
+				
 				synchronized (timers) {
 					for (final byte data: timers.keySet()) {
 						if (timers.get(data) > 0) {

@@ -30,6 +30,8 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -248,6 +250,33 @@ public class Game implements Listener {
 				
 		HandlerList.unregisterAll(this);
 	}
+
+	public void stop_finish() {
+		stop = true;
+		Plugin_MineTime.Plugin.game = null;
+		Bukkit.getScheduler().runTask(Plugin_MineTime.Plugin, new Runnable() {
+			
+			@Override
+			public void run() {
+				p1_room.unload();
+				p2_room.unload();
+				
+				sc.clearSlot(DisplaySlot.SIDEBAR);
+				sc = null;
+				
+				for (Player p: Bukkit.getOnlinePlayers()) {
+					p.teleport(w.getSpawnLocation());
+					p.setGameMode(GameMode.ADVENTURE);
+					p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+				}
+
+				p1.playEffect(p1.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
+				p2.playEffect(p2.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
+			}
+		});
+				
+		HandlerList.unregisterAll(this);
+	}
 	
 	public void s_stop() {
 		stop = true;
@@ -376,6 +405,7 @@ public class Game implements Listener {
 					p2.setPlayerTime(7500, false);
 				}
 				p.teleport(p.getLocation().add(0, teleport, 0));
+				p.playSound(p.getLocation(), Sound.FIREWORK_BLAST, 1, 1);
 			} else if (ic.equals(Items.getNowItem())) {
 				p.closeInventory();
 				teleport += 8;
@@ -387,6 +417,7 @@ public class Game implements Listener {
 					p2.setPlayerTime(6500, false);
 				}
 				p.teleport(p.getLocation().add(0, teleport, 0));
+				p.playSound(p.getLocation(), Sound.FIREWORK_BLAST, 1, 1);
 			} else if (ic.equals(Items.getFutureItem())) {
 				p.closeInventory();
 				teleport += 16;
@@ -398,6 +429,7 @@ public class Game implements Listener {
 					p2.setPlayerTime(7000, false);
 				}
 				p.teleport(p.getLocation().add(0, teleport, 0));
+				p.playSound(p.getLocation(), Sound.FIREWORK_BLAST, 1, 1);
 			}
 		}
 	}
@@ -418,16 +450,14 @@ public class Game implements Listener {
 			}
 			
 			if (w.getBlockAt(event.getPlayer().getLocation().add(0, -1, 0)).getType() == Material.EMERALD_BLOCK || w.getBlockAt(event.getPlayer().getLocation().add(0, -2, 0)).getType() == Material.EMERALD_BLOCK) {
+				
 				if (p.equals(p1)) {
 					p1_room_number++;
 					if (p1_room_number == rooms) {
 						sendGameMessage("Du hast das Spiel gewonnen", p);
 						sendGameMessage(p.getDisplayName() + " hat das Spiel gewonnen!");
 						
-						p1.playEffect(p1.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
-						p2.playEffect(p2.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
-						
-						stop();
+						stop_finish();
 					} else {
 						p1_room.unload();
 						
@@ -438,16 +468,17 @@ public class Game implements Listener {
 								break;
 							}
 						}
-						p.playEffect(p.getLocation(), Effect.RECORD_PLAY, m);
 						
 						Coordinate spawn = room_list.get(p1_room_number);
 						p1_time = Time.PRESENT;
 						p1.setPlayerTime(6500, true);
 						p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8, spawn.getZ()+1));
+						p.playEffect(p.getLocation(), Effect.RECORD_PLAY, m);
 						p1_room = new Room(w, spawn, false);
 						
 						sendGameMessage("Du hast Test " + (p1_room_number) + " erfolgreich absolviert!", p);
 						p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+						p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 10000, false, false), true);
 					}
 				} else {
 					p2_room_number++;
@@ -455,10 +486,7 @@ public class Game implements Listener {
 						sendGameMessage("Du hast das Spiel gewonnen", p);
 						sendGameMessage(p.getDisplayName() + " hat das Spiel gewonnen!");
 						
-						p1.playEffect(p1.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
-						p2.playEffect(p2.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
-						
-						stop();
+						stop_finish();
 					} else {
 						p2_room.unload();
 						
@@ -469,16 +497,17 @@ public class Game implements Listener {
 								break;
 							}
 						}
-						p.playEffect(p.getLocation(), Effect.RECORD_PLAY, m);
 						
 						Coordinate spawn = room_list.get(p2_room_number);
 						p2_time = Time.PRESENT;
 						p2.setPlayerTime(6500, false);
 						p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + 24, spawn.getZ()+1));
+						p.playEffect(p.getLocation(), Effect.RECORD_PLAY, m);
 						p2_room = new Room(w, spawn, true);
 						
 						sendGameMessage("Du hast Test " + (p2_room_number) + " erfolgreich absolviert!", p);
 						p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+						p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 10000, false, false), true);
 					}
 				}
 			}
