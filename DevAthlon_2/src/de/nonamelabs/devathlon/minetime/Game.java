@@ -6,6 +6,7 @@ import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -156,12 +157,12 @@ public class Game implements Listener {
 		obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 		
 		int curr = 0;
-		obj.getScore(p1.getDisplayName() + ": " + (p1_room_number+1)).setScore(curr++);
-		obj.getScore(p2.getDisplayName() + ": " + (p2_room_number+1)).setScore(curr++);
+		obj.getScore(ChatColor.GOLD + p1.getDisplayName() + ChatColor.WHITE + ": " + (p1_room_number+1)).setScore(curr++);
+		obj.getScore(ChatColor.GOLD + p2.getDisplayName() + ChatColor.WHITE + ": " + (p2_room_number+1)).setScore(curr++);
 		obj.getScore(ChatColor.RESET + "").setScore(curr++);
-		obj.getScore("Levels: " + rooms).setScore(curr++);;
+		obj.getScore(ChatColor.GOLD + "Levels" + ChatColor.WHITE + ": " + rooms).setScore(curr++);;
 		obj.getScore(ChatColor.RESET + "" + ChatColor.RESET).setScore(curr++);
-		obj.getScore("Zeit: " + remaining_time).setScore(curr++);
+		obj.getScore(ChatColor.GOLD + "Zeit" + ChatColor.WHITE + ": " + remaining_time).setScore(curr++);
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -195,6 +196,10 @@ public class Game implements Listener {
 		p.getInventory().clear();
 		p.getInventory().setItem(8, Items.getWarpItem());
 		
+		p.setPlayerTime(6500, false);
+		
+		p.playEffect(p.getLocation(), Effect.RECORD_PLAY, Material.RECORD_11);
+		
 		p.setScoreboard(sc);
 	}
 	
@@ -205,6 +210,8 @@ public class Game implements Listener {
 		p.setHealth(20);
 		p.setFoodLevel(20);
 
+		p.setPlayerTime(6500, false);
+		
 		p.getInventory().clear();
 		
 		p.setScoreboard(sc);
@@ -363,8 +370,10 @@ public class Game implements Listener {
 				teleport += 0;
 				if (p.equals(p1)) {
 					p1_time = Time.PAST;
+					p1.setPlayerTime(7500, false);
 				} else {
 					p2_time = Time.PAST;
+					p2.setPlayerTime(7500, false);
 				}
 				p.teleport(p.getLocation().add(0, teleport, 0));
 			} else if (ic.equals(Items.getNowItem())) {
@@ -372,8 +381,10 @@ public class Game implements Listener {
 				teleport += 8;
 				if (p.equals(p1)) {
 					p1_time = Time.PRESENT;
+					p1.setPlayerTime(6500, false);
 				} else {
 					p2_time = Time.PRESENT;
+					p2.setPlayerTime(6500, false);
 				}
 				p.teleport(p.getLocation().add(0, teleport, 0));
 			} else if (ic.equals(Items.getFutureItem())) {
@@ -381,8 +392,10 @@ public class Game implements Listener {
 				teleport += 16;
 				if (p.equals(p1)) {
 					p1_time = Time.FUTURE;
+					p1.setPlayerTime(7000, false);
 				} else {
 					p2_time = Time.FUTURE;
+					p2.setPlayerTime(7000, false);
 				}
 				p.teleport(p.getLocation().add(0, teleport, 0));
 			}
@@ -410,12 +423,26 @@ public class Game implements Listener {
 					if (p1_room_number == rooms) {
 						sendGameMessage("Du hast das Spiel gewonnen", p);
 						sendGameMessage(p.getDisplayName() + " hat das Spiel gewonnen!");
+						
+						p1.playEffect(p1.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
+						p2.playEffect(p2.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
+						
 						stop();
 					} else {
 						p1_room.unload();
 						
+						Material m;
+						while (true) {
+							m = Material.values()[r.nextInt(Material.values().length)];
+							if (m == Material.GOLD_RECORD || m == Material.RECORD_3 || m == Material.RECORD_4 || m == Material.RECORD_5 || m == Material.RECORD_6 || m == Material.RECORD_7 || m == Material.RECORD_8) {
+								break;
+							}
+						}
+						p.playEffect(p.getLocation(), Effect.RECORD_PLAY, m);
+						
 						Coordinate spawn = room_list.get(p1_room_number);
 						p1_time = Time.PRESENT;
+						p1.setPlayerTime(6500, true);
 						p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8, spawn.getZ()+1));
 						p1_room = new Room(w, spawn, false);
 						
@@ -427,12 +454,26 @@ public class Game implements Listener {
 					if (p2_room_number == rooms) {
 						sendGameMessage("Du hast das Spiel gewonnen", p);
 						sendGameMessage(p.getDisplayName() + " hat das Spiel gewonnen!");
+						
+						p1.playEffect(p1.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
+						p2.playEffect(p2.getLocation(), Effect.RECORD_PLAY, Material.RECORD_10);
+						
 						stop();
 					} else {
 						p2_room.unload();
 						
+						Material m;
+						while (true) {
+							m = Material.values()[r.nextInt(Material.values().length)];
+							if (m == Material.GOLD_RECORD || m == Material.RECORD_3 || m == Material.RECORD_4 || m == Material.RECORD_5 || m == Material.RECORD_6 || m == Material.RECORD_7 || m == Material.RECORD_8) {
+								break;
+							}
+						}
+						p.playEffect(p.getLocation(), Effect.RECORD_PLAY, m);
+						
 						Coordinate spawn = room_list.get(p2_room_number);
 						p2_time = Time.PRESENT;
+						p2.setPlayerTime(6500, false);
 						p.teleport(new Location(w, spawn.getX()+21, spawn.getY()+ 1 + 8 + 24, spawn.getZ()+1));
 						p2_room = new Room(w, spawn, true);
 						
