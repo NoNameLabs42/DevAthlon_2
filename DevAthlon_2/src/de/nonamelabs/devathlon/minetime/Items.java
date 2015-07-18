@@ -12,6 +12,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import de.nonamelabs.devathlon.util.Item_Util;
 
+/**
+ * Alle im Spiel benötigten Items
+ */
 public class Items {	
 	public static Inventory getWarpInventory(Time time) {
 		Inventory time_menue = Bukkit.createInventory(null, 9, ChatColor.RED + "Lets do the time warp agaaain");

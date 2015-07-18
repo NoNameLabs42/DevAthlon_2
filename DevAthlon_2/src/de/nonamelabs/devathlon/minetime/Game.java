@@ -44,25 +44,27 @@ public class Game implements Listener {
 	public static final ChatColor CHATCOLOR = ChatColor.WHITE;
 	public static final ChatColor PLUGIN_NAME_COLOR = ChatColor.LIGHT_PURPLE;
 	
-	public int rooms;
-	public int total_time;
-	public List<Coordinate> room_list;
-	public Random r = new Random();
-	public boolean stop = false;
-	public World w;
-	public Scoreboard sc;
-	public String remaining_time;
+	public int rooms; //Anzahl der Räume die die Spieler durchgehen müssen
+	public int total_time; //Maximale Zeit
+	public List<Coordinate> room_list; //Liste der Räume die die Spieler durchgehen
+	public Random r = new Random(); //Random
+	public boolean stop = false; //Variable ob das Spiel gestoppt ist
+	public World w; //Die Welt des Plugins
+	public Scoreboard sc; //Das Scoreboard des Plugins
+	public String remaining_time; //Die verbleibende Zeit formatiert
 	
-	public Player p1;
-	public Player p2;
-	public Time p1_time = Time.PRESENT;
-	public Time p2_time = Time.PRESENT;
-	public int p1_room_number = 0;
-	public int p2_room_number = 0;
-	public Room p1_room;
-	public Room p2_room;
+	public Player p1; //Spieler 1
+	public Player p2; //Spieler 2
+	public Time p1_time = Time.PRESENT; //Die Position von Spieler 1
+	public Time p2_time = Time.PRESENT; //Die Position von Spieler 2
+	public int p1_room_number = 0; //Die Raumnummer von Spieler 1
+	public int p2_room_number = 0; //Die Raumnummer von Spieler 2
+	public Room p1_room; //Der Raum von Spieler 1
+	public Room p2_room; //Der Raum von Spieler 2
 	
-	
+	/**
+	 * Aufbauen des Spiels und der Spieler
+	 */
 	public Game(int rooms, int time, List<Coordinate> room_list) {
 		this.rooms = rooms;
 		this.total_time = time;
@@ -90,6 +92,9 @@ public class Game implements Listener {
 		start();
 	}
 	
+	/**
+	 * Spieler initialisieren etc
+	 */
 	public void start() {
 		initMap();
 		
@@ -144,6 +149,9 @@ public class Game implements Listener {
 		});
 	}
 	
+	/**
+	 * Scoreboard updaten
+	 */
 	public void updateScoreboard() {
 		Objective obj;
 		
@@ -167,6 +175,9 @@ public class Game implements Listener {
 		obj.getScore(ChatColor.GOLD + "Zeit" + ChatColor.WHITE + ": " + remaining_time).setScore(curr++);
 	}
 	
+	/**
+	 * Jeden der Räume in der Map für zweiten Spieler duplizieren
+	 */
 	@SuppressWarnings("deprecation")
 	public void initMap() {
 		for (Coordinate c: room_list) {
@@ -183,6 +194,9 @@ public class Game implements Listener {
 		}
 	}
 	
+	/**
+	 * Einen Spieler initialisieren
+	 */
 	public void setupPlayer(Player p, Coordinate spawn, boolean second) {
 		p.setGameMode(GameMode.ADVENTURE);
 		sendGameMessage("Du bist Spieler!", p);
@@ -205,6 +219,9 @@ public class Game implements Listener {
 		p.setScoreboard(sc);
 	}
 	
+	/**
+	 * Einen Spectator initialisieren
+	 */
 	public void setupSpectator(Player p) {
 		p.setGameMode(GameMode.SPECTATOR);
 		p.teleport(r.nextBoolean() ? p1 : p2);
@@ -219,14 +236,23 @@ public class Game implements Listener {
 		p.setScoreboard(sc);
 	}
 	
+	/**
+	 * Formatierte Spielnachricht senden
+	 */
 	public void sendGameMessage(String message) {
 		Bukkit.broadcastMessage(ChatColor.GRAY + "[" + PLUGIN_NAME_COLOR + "MineTime" + ChatColor.GRAY + "] " + PLUGIN_COLOR + message);
 	}
 	
+	/**
+	 * Formatierte Spielnachricht an einen Spieler senden
+	 */
 	public void sendGameMessage(String message, Player p) {
 		p.sendMessage(ChatColor.GRAY + "[" + PLUGIN_NAME_COLOR + "MineTime" + ChatColor.GRAY + "] " + PLUGIN_COLOR + message);
 	}
 	
+	/**
+	 * Spiel beenden ohne besondere Dinge
+	 */
 	public void stop() {
 		stop = true;
 		Plugin_MineTime.Plugin.game = null;
@@ -250,7 +276,10 @@ public class Game implements Listener {
 				
 		HandlerList.unregisterAll(this);
 	}
-
+	
+	/**
+	 * Spiel beenden und Sound abspielen
+	 */
 	public void stop_finish() {
 		stop = true;
 		Plugin_MineTime.Plugin.game = null;
@@ -278,6 +307,9 @@ public class Game implements Listener {
 		HandlerList.unregisterAll(this);
 	}
 	
+	/**
+	 * Bereits synchrones beenden des Spiels
+	 */
 	public void s_stop() {
 		stop = true;
 		Plugin_MineTime.Plugin.game = null;
@@ -296,6 +328,7 @@ public class Game implements Listener {
 	
 	
 	//Events! ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		event.setJoinMessage("");
@@ -320,6 +353,7 @@ public class Game implements Listener {
 		
 		ItemStack ic = event.getItem();		
 		if (ic != null) {
+			//Zeitmaschine
 			if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && ic.equals(Items.getWarpItem())) {
 				if (w.getBlockAt(event.getPlayer().getLocation().add(0, -1, 0)).getType() == Material.GOLD_BLOCK || w.getBlockAt(event.getPlayer().getLocation().add(0, -2, 0)).getType() == Material.GOLD_BLOCK) {
 					event.getPlayer().openInventory(Items.getWarpInventory(event.getPlayer().equals(p1) ? p1_time : p2_time));
@@ -329,7 +363,7 @@ public class Game implements Listener {
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void onPlayerDrop(PlayerDropItemEvent event) {
 		event.setCancelled(true);
@@ -345,6 +379,9 @@ public class Game implements Listener {
 		event.setCancelled(true);
 	}
 	
+	/**
+	 * Chat-Nachrichten formatieren
+	 */
 	@EventHandler
 	public void onPlayerChat(AsyncPlayerChatEvent event) {
 		if (event.getMessage().contains("%")) {
@@ -368,6 +405,9 @@ public class Game implements Listener {
 		event.setCancelled(true);
 	}
 	
+	/**
+	 * teleport
+	 */
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent event) {
 		event.setCancelled(true);
@@ -380,6 +420,7 @@ public class Game implements Listener {
 			return;
 		}
 		
+		//Teleport
 		if (iv.getName().equals(Items.getWarpInventory(Time.PRESENT).getName())) {
 			int teleport = 0;
 			switch (p.equals(p1) ? p1_time : p2_time) {
@@ -434,6 +475,9 @@ public class Game implements Listener {
 		}
 	}
 	
+	/**
+	 * Level_finish und Rooms
+	 */
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent event) {
 		Player p = event.getPlayer();
@@ -507,6 +551,7 @@ public class Game implements Listener {
 						
 						sendGameMessage("Du hast Test " + (p2_room_number) + " erfolgreich absolviert!", p);
 						p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
+						
 						p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 10000, false, false), true);
 					}
 				}

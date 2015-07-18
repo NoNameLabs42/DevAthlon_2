@@ -2,6 +2,9 @@ package de.nonamelabs.devathlon.util;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
+/**
+ * Positionen die man leicht in Config speichern und auslesen kann
+ */
 public class Coordinate {
 	public int x, y, z;
 	

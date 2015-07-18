@@ -19,6 +19,10 @@ import de.nonamelabs.devathlon.Plugin_MineTime;
 import de.nonamelabs.devathlon.util.Coordinate;
 import de.nonamelabs.devathlon.util.Direction;
 
+/**
+ * Es wird immer ein Raum geladen sobald ein Spieler einen betritt
+ * Erzeugt Partikel-Effekt und Mechanismen
+ */
 public class Room {
 	public World w;
 	public boolean top;
@@ -38,6 +42,7 @@ public class Room {
 		this.c = c;
 		this.top = top;
 		
+		//Durchsucht alle Blöcke nach wichtigen Blöcken
 		for (int x = c.getX(); x <= c.getX() + 23; x++) {
 			for (int y = c.getY() + (top ? 24 : 0); y < c.getY() + 23 + (top ? 24 : 0); y++) {
 				for (int z = c.getZ(); z <= c.getZ() + 23; z++) {
@@ -59,6 +64,9 @@ public class Room {
 		}
 	}
 	
+	/**
+	 * Wird aufgerufen sobald der Spieler den Raum verlässt, um Beacons etc wieder hin zu setzen
+	 */
 	public void unload() {
 		synchronized (timers) {
 			for (byte data: timers.keySet()) {
@@ -87,6 +95,9 @@ public class Room {
 		}
 	}
 	
+	/**
+	 * Wird jede Sekunde aufgerufen
+	 */
 	@SuppressWarnings("deprecation")
 	public void gameTick() {
 		Bukkit.getScheduler().runTask(Plugin_MineTime.Plugin, new Runnable() {
@@ -187,6 +198,9 @@ public class Room {
 		});
 	}
 	
+	/**
+	 * Wird jedesmal aufgerufen wenn der Spieler in dem Raum sich bewegt
+	 */
 	@SuppressWarnings("deprecation")
 	public void player_move(Player p)  {
 		if (w.getBlockAt(p.getLocation().add(0, -1, 0)).getType() == Material.PISTON_BASE) {
@@ -204,6 +218,10 @@ public class Room {
 		}
 	}
 	
+	/**
+	 * Sucht die Richtung in die ein Block sich ausfahren kann
+	 * beginnend bei Nord -> Süd -> West -> Ost -> Hoch -> Runter
+	 */
 	public Direction getDirection(Block b) {
 		for (Direction direc: Direction.values()) {
 			Block block = b.getWorld().getBlockAt(b.getLocation().add(direc.getVector()));

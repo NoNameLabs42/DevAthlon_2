@@ -80,8 +80,8 @@ public class Plugin_MineTime extends JavaPlugin implements Listener {
 				return false;
 			}
 			
-			int rooms = 0;
-			int time = 0;
+			int rooms = 0; //Anzahl der Räume
+			int time = 0; //Maximale Zeit in Sekunden
 			
 			try {
 				rooms = Integer.valueOf(args[0]);
@@ -121,7 +121,7 @@ public class Plugin_MineTime extends JavaPlugin implements Listener {
 				sender.sendMessage(ChatColor.RED + "Das Spiel ist bereits gestartet!");
 			} else {
 				sender.sendMessage(ChatColor.GREEN + "Du hast das Spiel gestartet!");
-				game = new Game(rooms, time, room_list);
+				game = new Game(rooms, time, room_list); //Starte das Spiel
 			}
 			return true;
 		} else if (commandlabel.equalsIgnoreCase("stopgame")) {
@@ -129,13 +129,13 @@ public class Plugin_MineTime extends JavaPlugin implements Listener {
 			if (game==null) {
 				sender.sendMessage(ChatColor.RED + "Das Spiel war nicht gestartet!");
 			} else {
-				game.s_stop();
+				game.s_stop(); //Spiel stoppen
 				sender.sendMessage(ChatColor.GREEN + "Du hast das Spiel gestoppt!");
 			}
 			return true;
 		} else if (commandlabel.equalsIgnoreCase("selector")) {
 			if (sender instanceof Player) {
-				((Player)sender).getInventory().addItem(Items.getSelectorItem());
+				((Player)sender).getInventory().addItem(Items.getSelectorItem()); //Dem Spieler ein Item geben
 				sender.sendMessage(ChatColor.GREEN + "Du hast das Selector-Item erhalten! Rechtsklicke die Nord_West_Tiefste Ecke des Raums (der Raum muss 24 * 24 * 24 Blöcke groß sein und 3 Etagen beinhalten) um einen Raum hinzuzufügen!");
 				return true;	
 			} else {
@@ -143,7 +143,7 @@ public class Plugin_MineTime extends JavaPlugin implements Listener {
 				return false;
 			}
 		} else if (commandlabel.equalsIgnoreCase("resetRooms")) {
-			room_list.clear();
+			room_list.clear(); //Ale Räume zurücksetzen
 			sender.sendMessage(ChatColor.GREEN + "Alle Räume wurden zurückgesetzt!");
 			return true;
 		} 
@@ -159,7 +159,7 @@ public class Plugin_MineTime extends JavaPlugin implements Listener {
 		if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
 			if (item.equals(Items.getSelectorItem())) {
 				event.setCancelled(true);
-				addRoom(event.getPlayer(), event.getClickedBlock().getLocation());
+				addRoom(event.getPlayer(), event.getClickedBlock().getLocation()); //Den angeklickten Raum hinzufügen
 			}
 		}
 	}

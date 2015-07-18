@@ -11,6 +11,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class Item_Util {
+	/**
+	 * Fügt dem Item einen Enchantment effect und eine Lore hinzu
+	 */
 	public static ItemStack addChosenEffect(ItemStack item) {
 		ItemMeta meta = item.getItemMeta();
 		List<String> lore = meta.getLore();
